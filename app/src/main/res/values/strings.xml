@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Learn Maths</string>
+    <string name="title">Let\'s Count Number</string>
+
+    <string name="text1">1</string>
+    <string name="text2">2</string>
+    <string name="text3">3</string>
+    <string name="text4">4</string>
+    <string name="text5">5</string>
+
+
+    <string name="place1"></string>
+    <string name="place2"></string>
+    <string name="place3"></string>
+    <string name="place4"></string>
+    <string name="place5"></string>
+
+    <string name="score">0</string>
+</resources>
