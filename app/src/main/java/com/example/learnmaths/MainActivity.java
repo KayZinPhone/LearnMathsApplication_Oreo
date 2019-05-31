@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent game_intent = new Intent(MainActivity.this, GameActivity.class);
+                Intent game_intent = new Intent(MainActivity.this, InstructionActivity.class);
                 startActivity(game_intent);
                 mediaPlayer.stop();
             }
@@ -93,6 +93,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent setting_intent = new Intent(MainActivity.this, SettingActivity.class);
                 startActivity(setting_intent);
+            }
+        });
+
+        btnLeaderBoard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent leaderboard_intent = new Intent(MainActivity.this, ScoreActivity.class);
+                startActivity(leaderboard_intent);
             }
         });
 

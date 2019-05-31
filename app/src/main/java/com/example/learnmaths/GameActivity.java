@@ -8,20 +8,14 @@ import android.graphics.Point;
 import android.media.MediaPlayer;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.preference.Preference;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Display;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -39,6 +33,8 @@ public class GameActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
     private MediaPlayer correctTone;
     private MediaPlayer wrongTone;
+    private MediaPlayer winTone;
+
     private TextView txtTimeCount;
     private Random r = new Random();
 
@@ -71,6 +67,10 @@ public class GameActivity extends AppCompatActivity {
     private int count = 0;
     private int clickCount = 0;
 
+
+    //Check Win or Lose status
+    private String playedStatus="Finish";
+
     //Winning Status
     private boolean isGameFinish = false;
     private boolean isGameFinalFinish = false;
@@ -102,6 +102,7 @@ public class GameActivity extends AppCompatActivity {
 
     //Score
     private TextView score;
+    private int scoreCount = 0;
 
     private TextView[] object = new TextView[5];
     private int[] sortAry = new int[5];
@@ -150,6 +151,7 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        scoreCount = 0;
 
         //bubble view
         textView1 = findViewById(R.id.textView1);
@@ -188,9 +190,11 @@ public class GameActivity extends AppCompatActivity {
 
         txtTimeCount = findViewById(R.id.time_count);
 
+        //Media Player
         mediaPlayer = MediaPlayer.create(GameActivity.this, R.raw.main_song);
         soundStatus = getSharedPreferences("sound_status", Context.MODE_PRIVATE);
         String sound_status = soundStatus.getString("sound_status", "");
+        System.out.println("Sound status "+sound_status);
         if(sound_status.equals("On"))
         {
             mediaPlayer.start();
@@ -199,6 +203,12 @@ public class GameActivity extends AppCompatActivity {
         {
             mediaPlayer.stop();
         }
+
+        //Tone of Bubble
+        correctTone = MediaPlayer.create(GameActivity.this, R.raw.click_button);
+        wrongTone = MediaPlayer.create(GameActivity.this, R.raw.incorrect_sound);
+        winTone = MediaPlayer.create(GameActivity.this, R.raw.win_sound);
+
 
         //Get Screen Size.
         WindowManager wm = getWindowManager();
@@ -214,26 +224,76 @@ public class GameActivity extends AppCompatActivity {
             for (int i = 0; i < object.length; i++) {
                 // object[i].setBackgroundResource(R.drawable.bubble);
                 object[i].setBackground(getDrawable(R.drawable.bubble));
-
-
             }
         } else if (changeBackground().equals("Ball")) {
             for (int i = 0; i < object.length; i++) {
                 // object[i].setBackgroundResource(R.drawable.bubble);
                 object[i].setBackground(getDrawable(R.drawable.basketball_background));
-
-
             }
         }
         if (getLevel().equals("Easy")) {
+            scoreCount = 0;
             selectedLevel = easy;
-            playGame(selectedLevel);
+            for(int i = 0 ; i < 4 ; i++) {
+                System.out.println("This is "+i+" iteration");
+                if(playGame(selectedLevel, i).equals("Finish"))
+                {
+                    System.out.println("Finish " + i + "iteration");
+                }
+                else if(playGame(selectedLevel, i).equals("Lose"))
+                {
+                    i++;
+                    wrongTone.start();
+                }
+                else if(playGame(selectedLevel, i).equals("Win"))
+                {
+                    winTone.start();
+                }
+            }
+
         } else if (getLevel().equals("Medium")) {
+            scoreCount = 0;
             selectedLevel = medium;
-            playGame(selectedLevel);
+            for(int i = 0 ; i < 4 ; i++) {
+                System.out.println("This is "+i+" iteration");
+                if(playGame(selectedLevel, i).equals("Finish"))
+                {
+                    System.out.println("Finish " + i + "iteration");
+                }
+                else if(playGame(selectedLevel, i).equals("Lose"))
+                {
+                    i++;
+                    wrongTone.start();
+                }
+                else if(playGame(selectedLevel, i).equals("Win"))
+                {
+                    winTone.start();
+                }
+            }
         } else if (getLevel().equals("Hard")) {
+            textView1.setTextSize(28);
+            textView2.setTextSize(28);
+            textView3.setTextSize(28);
+            textView4.setTextSize(28);
+            textView5.setTextSize(28);
+            scoreCount = 0;
             selectedLevel = hard;
-            playGame(selectedLevel);
+            for(int i = 0 ; i < 4 ; i++) {
+                System.out.println("This is "+i+" iteration");
+                if(playGame(selectedLevel, i).equals("Finish"))
+                {
+                    System.out.println("Finish " + i + "iteration");
+                }
+                else if(playGame(selectedLevel, i).equals("Lose"))
+                {
+                    i++;
+                    wrongTone.start();
+                }
+                else if(playGame(selectedLevel, i).equals("Win"))
+                {
+                    winTone.start();
+                }
+            }
         }
 //        if(setLevel().equals("Easy"))
 //        {
@@ -417,11 +477,6 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
-
-
-
-
-
     public void changePos1() {
         // img1PosY -= 10;
 
@@ -575,6 +630,12 @@ public class GameActivity extends AppCompatActivity {
         place3.setText("");
         place4.setText("");
         place5.setText("");
+        isFirstPlaceBlank = true;
+        isSecondPlaceBlank = true;
+        isThirdPlaceBlank = true;
+        isFourthPlaceBlank = true;
+        isFifthPlaceBlank = true;
+
     }
 
     public int[] sort(TextView[] strAry) {
@@ -609,45 +670,563 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
-    public void playGame(String[][] ary) {
-        for (int count = 0; count < 5; count++) {
-            System.out.println("The count number is fdsdfdsfd" + count);
+    public String playGame(String[][] ary, int count) {
+
             if (count == 0) {
+                setVisible();
+                setBlank();
                 System.out.println("The count number is 0");
                 //set number to the array
                 for (int i = 0; i < object.length; i++) {
                     object[i].setText(ary[0][i]);
-                    System.out.print(ary[0] + "\t");
+                    System.out.print(ary[0][i] + "\t");
 
                 }
                 placeAry = sort(object);
-                while (clickCount != 5) {
+                object[0].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        correctTone.start();
+                        textView1.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
 
-                    object[0].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
+                        if(checkBlank(textView1.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
 
-                            textView1.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 1 is clicked");
-                            checkBlank(textView1.getText().toString());
-                            clickCount++;
 //                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
 //                                place1.setText(textView1.getText().toString());
 //                                textView1.setVisibility(TextView.INVISIBLE);
 //                                clickCount++;
 //                            }
+                    }
+                });
+                object[1].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
 
+                        textView2.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+                        if(checkBlank(textView2.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
 
+//                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
+//                                place2.setText(textView2.getText().toString());
+//                                textView2.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[2].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView3.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 3 is clicked");
+                        if(checkBlank(textView3.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+//                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2] && isThirdPlaceBlank) {
+//                                place3.setText(textView3.getText().toString());
+//                                textView3.setVisibility(TextView.INVISIBLE);
+//                                isThirdPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                //  count++;
+//                            }
+                    }
+                });
+                object[3].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView4.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 4 is clicked");
+                        if(checkBlank(textView4.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3] && isFourthPlaceBlank) {
+//                                place4.setText(textView4.getText().toString());
+//                                textView4.setVisibility(TextView.INVISIBLE);
+//                                isFourthPlaceBlank = false;
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[4].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView5.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 5 is clicked");
+                        if(checkBlank(textView5.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4] && isFifthPlaceBlank) {
+//                                place5.setText(textView5.getText().toString());
+//                                textView5.setVisibility(TextView.INVISIBLE);
+//                                isFifthPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                // count++;
+//                            }
+                    }
+                });
+
+            }
+            else if(count == 1) {
+                score.setText(getString(R.string.score)+ 1);
+                winTone.start();
+                setVisible();
+                setBlank();
+                for (int i = 0; i < object.length; i++) {
+                    object[i].setText(ary[1][i]);
+                    System.out.print(ary[1][i] + "\t");
+
+                }
+                placeAry = sort(object);
+                object[0].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        correctTone.start();
+                        textView1.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+
+                        if(checkBlank(textView1.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
+//                                place1.setText(textView1.getText().toString());
+//                                textView1.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[1].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView2.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+                        if(checkBlank(textView2.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
+//                                place2.setText(textView2.getText().toString());
+//                                textView2.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[2].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView3.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 3 is clicked");
+                        if(checkBlank(textView3.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+//                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2] && isThirdPlaceBlank) {
+//                                place3.setText(textView3.getText().toString());
+//                                textView3.setVisibility(TextView.INVISIBLE);
+//                                isThirdPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                //  count++;
+//                            }
+                    }
+                });
+                object[3].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView4.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 4 is clicked");
+                        if(checkBlank(textView4.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3] && isFourthPlaceBlank) {
+//                                place4.setText(textView4.getText().toString());
+//                                textView4.setVisibility(TextView.INVISIBLE);
+//                                isFourthPlaceBlank = false;
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[4].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView5.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 5 is clicked");
+                        if(checkBlank(textView5.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4] && isFifthPlaceBlank) {
+//                                place5.setText(textView5.getText().toString());
+//                                textView5.setVisibility(TextView.INVISIBLE);
+//                                isFifthPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                // count++;
+//                            }
+                    }
+                });
+            }
+            else if(count == 2) {
+                score.setText(getString(R.string.score)+ 1);
+                winTone.start();
+                setVisible();
+                setBlank();
+                for (int i = 0; i < object.length; i++) {
+                    object[i].setText(ary[2][i]);
+                    System.out.print(ary[2][i] + "\t");
+                }
+                placeAry = sort(object);
+                object[0].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        correctTone.start();
+                        textView1.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+
+                        if(checkBlank(textView1.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
+//                                 place1.setText(textView1.getText().toString());
+//                                textView1.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[1].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView2.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+                        if(checkBlank(textView2.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
+//                                place2.setText(textView2.getText().toString());
+//                                textView2.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[2].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView3.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 3 is clicked");
+                        if(checkBlank(textView3.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+//                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2] && isThirdPlaceBlank) {
+//                                place3.setText(textView3.getText().toString());
+//                                textView3.setVisibility(TextView.INVISIBLE);
+//                                isThirdPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                //  count++;
+//                            }
+                    }
+                });
+                object[3].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView4.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 4 is clicked");
+                        if(checkBlank(textView4.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3] && isFourthPlaceBlank) {
+//                                place4.setText(textView4.getText().toString());
+//                                textView4.setVisibility(TextView.INVISIBLE);
+//                                isFourthPlaceBlank = false;
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[4].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView5.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 5 is clicked");
+                        if(checkBlank(textView5.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4] && isFifthPlaceBlank) {
+//                                place5.setText(textView5.getText().toString());
+//                                textView5.setVisibility(TextView.INVISIBLE);
+//                                isFifthPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                // count++;
+//                            }
+                    }
+                });
+            }
+            else if(count == 3)
+            {
+                score.setText(getString(R.string.score)+ 1);
+                winTone.start();
+                setVisible();
+                setBlank();
+                for (int i = 0; i < object.length; i++) {
+                    object[i].setText(ary[3][i]);
+                    System.out.print(ary[3][i] + "\t");
+
+                }
+                placeAry = sort(object);
+                object[0].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        correctTone.start();
+                        textView1.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+
+                        if(checkBlank(textView1.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
+//                                place1.setText(textView1.getText().toString());
+//                                textView1.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[1].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView2.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 1 is clicked");
+                        if(checkBlank(textView2.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
+//                                place2.setText(textView2.getText().toString());
+//                                textView2.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[2].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView3.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 3 is clicked");
+                        if(checkBlank(textView3.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+//                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2] && isThirdPlaceBlank) {
+//                                place3.setText(textView3.getText().toString());
+//                                textView3.setVisibility(TextView.INVISIBLE);
+//                                isThirdPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                //  count++;
+//                            }
+                    }
+                });
+                object[3].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView4.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 4 is clicked");
+                        if(checkBlank(textView4.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3] && isFourthPlaceBlank) {
+//                                place4.setText(textView4.getText().toString());
+//                                textView4.setVisibility(TextView.INVISIBLE);
+//                                isFourthPlaceBlank = false;
+//                                clickCount++;
+//                            }
+                    }
+                });
+                object[4].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        textView5.setVisibility(TextView.INVISIBLE);
+                        System.out.println("Text View 5 is clicked");
+                        if(checkBlank(textView5.getText().toString()).equals("Wrong"))
+                        {
+                            playedStatus = "Lose";
+                        }
+                        else
+                        {
+                            playedStatus = "Win";
+                        }
+
+//                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4] && isFifthPlaceBlank) {
+//                                place5.setText(textView5.getText().toString());
+//                                textView5.setVisibility(TextView.INVISIBLE);
+//                                isFifthPlaceBlank = false;
+//                                clickCount++;
+//                            } else {
+//                                // count++;
+//                            }
+                    }
+                });
+            }
+            object[0].setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            correctTone.start();
+                            textView1.setVisibility(TextView.INVISIBLE);
+                            System.out.println("Text View 1 is clicked");
+
+                            if(checkBlank(textView1.getText().toString()).equals("Wrong"))
+                            {
+                                playedStatus = "Lose";
+                            }
+                            else
+                            {
+                                playedStatus = "Win";
+                            }
+
+//                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
+//                                place1.setText(textView1.getText().toString());
+//                                textView1.setVisibility(TextView.INVISIBLE);
+//                                clickCount++;
+//                            }
                         }
                     });
-                    object[1].setOnClickListener(new View.OnClickListener() {
+            object[1].setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
 
                             textView2.setVisibility(TextView.INVISIBLE);
                             System.out.println("Text View 1 is clicked");
-                            checkBlank(textView2.getText().toString());
-                            clickCount++;
+                            if(checkBlank(textView2.getText().toString()).equals("Wrong"))
+                            {
+                                playedStatus = "Lose";
+                            }
+                            else
+                            {
+                                playedStatus = "Win";
+                            }
+
 //                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
 //                                place2.setText(textView2.getText().toString());
 //                                textView2.setVisibility(TextView.INVISIBLE);
@@ -655,14 +1234,20 @@ public class GameActivity extends AppCompatActivity {
 //                            }
                         }
                     });
-                    object[2].setOnClickListener(new View.OnClickListener() {
+            object[2].setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
 
                             textView3.setVisibility(TextView.INVISIBLE);
                             System.out.println("Text View 3 is clicked");
-                            checkBlank(textView3.getText().toString());
-                            clickCount++;
+                            if(checkBlank(textView3.getText().toString()).equals("Wrong"))
+                            {
+                                playedStatus = "Lose";
+                            }
+                            else
+                            {
+                                playedStatus = "Win";
+                            }
 //                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2] && isThirdPlaceBlank) {
 //                                place3.setText(textView3.getText().toString());
 //                                textView3.setVisibility(TextView.INVISIBLE);
@@ -673,14 +1258,21 @@ public class GameActivity extends AppCompatActivity {
 //                            }
                         }
                     });
-                    object[3].setOnClickListener(new View.OnClickListener() {
+            object[3].setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            clickCount++;
+
                             textView4.setVisibility(TextView.INVISIBLE);
                             System.out.println("Text View 4 is clicked");
-                            checkBlank(textView4.getText().toString());
-                            clickCount++;
+                            if(checkBlank(textView4.getText().toString()).equals("Wrong"))
+                            {
+                                playedStatus = "Lose";
+                            }
+                            else
+                            {
+                                playedStatus = "Win";
+                            }
+
 //                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3] && isFourthPlaceBlank) {
 //                                place4.setText(textView4.getText().toString());
 //                                textView4.setVisibility(TextView.INVISIBLE);
@@ -688,15 +1280,22 @@ public class GameActivity extends AppCompatActivity {
 //                                clickCount++;
 //                            }
                         }
-                    });
-                    object[4].setOnClickListener(new View.OnClickListener() {
+            });
+            object[4].setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
 
                             textView5.setVisibility(TextView.INVISIBLE);
                             System.out.println("Text View 5 is clicked");
-                            checkBlank(textView5.getText().toString());
-                            clickCount++;
+                            if(checkBlank(textView5.getText().toString()).equals("Wrong"))
+                            {
+                                playedStatus = "Lose";
+                            }
+                            else
+                            {
+                                playedStatus = "Win";
+                            }
+
 //                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4] && isFifthPlaceBlank) {
 //                                place5.setText(textView5.getText().toString());
 //                                textView5.setVisibility(TextView.INVISIBLE);
@@ -706,314 +1305,91 @@ public class GameActivity extends AppCompatActivity {
 //                                // count++;
 //                            }
                         }
-                    });
-                    count++;
-
-                }
-            } else if (count == 1) {
-                clickCount = 0;
-                System.out.println("The count number is 0");
-                setVisible();
-                for (int i = 0; i < object.length; i++) {
-                    object[i].setText(ary[1][i]);
-                }
-                placeAry = sort(object);
-                while (clickCount != 5) {
-
-                    object[0].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            isClicked = true;
-                            textView1.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 1 is clicked");
-                            //checkBlank(textView1.getText().toString());
-                            if (Integer.parseInt(textView1.getText().toString()) == placeAry[0] && isFirstPlaceBlank) {
-                                place1.setText(textView1.getText().toString());
-                                textView1.setVisibility(TextView.INVISIBLE);
-                                isFirstPlaceBlank = false;
-                            } else {
-                                //count++;
-                            }
-
-                        }
-                    });
-                    object[1].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            isClicked = true;
-                            textView2.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 1 is clicked");
-                            //checkBlank(textView2.getText().toString());
-                            if (Integer.parseInt(textView2.getText().toString()) == placeAry[1] && isSecondPlaceBlank) {
-                                place2.setText(textView2.getText().toString());
-                                textView2.setVisibility(TextView.INVISIBLE);
-                                isSecondPlaceBlank = false;
-                            } else {
-                                //count++;
-                            }
-                        }
-                    });
-                    object[2].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            isClicked = true;
-                            textView3.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 3 is clicked");
-                            //checkBlank(textView3.getText().toString());
-                            if (Integer.parseInt(textView3.getText().toString()) == placeAry[2]) {
-                                place3.setText(textView3.getText().toString());
-                                textView3.setVisibility(TextView.INVISIBLE);
-                            } else {
-                                //count++;
-                            }
-                        }
-                    });
-                    object[3].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            isClicked = true;
-                            textView4.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 4 is clicked");
-                            //checkBlank(textView4.getText().toString());
-                            if (Integer.parseInt(textView4.getText().toString()) == placeAry[3]) {
-                                place4.setText(textView4.getText().toString());
-                                textView4.setVisibility(TextView.INVISIBLE);
-                            } else {
-                                //count++;
-                            }
-                        }
-                    });
-                    object[4].setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            isClicked = true;
-                            textView5.setVisibility(TextView.INVISIBLE);
-                            System.out.println("Text View 5 is clicked");
-                            checkBlank(textView5.getText().toString());
-//                            if (Integer.parseInt(textView5.getText().toString()) == placeAry[4]) {
-//                                place5.setText(textView5.getText().toString());
-//                                textView5.setVisibility(TextView.INVISIBLE);
-//                            } else {
-//                                //count++;
-//                            }
-                        }
-                    });
-                }
-                count++;
-            } else if (count == 2) {
-                setVisible();
-                for (int i = 0; i < object.length; i++) {
-                    object[i].setText(ary[2][i]);
-                }
-                placeAry = sort(object);
-                object[0].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView1.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 1 is clicked");
-                        checkBlank(textView1.getText().toString());
-//                        if (Integer.parseInt(textView1.getText().toString()) == placeAry[0]) {
-//                            place1.setText(textView1.getText().toString());
-//                            textView1.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //   count++;
-//                        }
-
-                    }
-                });
-                object[1].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView2.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 1 is clicked");
-                        checkBlank(textView2.getText().toString());
-//                        if (Integer.parseInt(textView2.getText().toString()) == placeAry[1]) {
-//                            place2.setText(textView2.getText().toString());
-//                            textView2.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //count++;
-//                        }
-                    }
-                });
-                object[2].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView3.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 3 is clicked");
-                        checkBlank(textView3.getText().toString());
-//                        if (Integer.parseInt(textView3.getText().toString()) == placeAry[2]) {
-//                            place3.setText(textView3.getText().toString());
-//                            textView3.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //  count++;
-//                        }
-                    }
-                });
-                object[3].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView4.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 4 is clicked");
-                        checkBlank(textView4.getText().toString());
-//                        if (Integer.parseInt(textView4.getText().toString()) == placeAry[3]) {
-//                            place4.setText(textView4.getText().toString());
-//                            textView4.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //count++;
-//                        }
-                    }
-                });
-                object[4].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView5.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 5 is clicked");
-                        checkBlank(textView5.getText().toString());
-//                        if (Integer.parseInt(textView5.getText().toString()) == placeAry[4]) {
-//                            place5.setText(textView5.getText().toString());
-//                            textView5.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //  count++;
-//                        }
-                    }
-                });
-
-            } else if (count == 3) {
-                setVisible();
-                for (int i = 0; i < object.length; i++) {
-                    object[i].setText(ary[3][i]);
-                }
-                placeAry = sort(object);
-                int j;
-                object[0].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView1.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 1 is clicked");
-                        checkBlank(textView1.getText().toString());
-//                        if (Integer.parseInt(textView1.getText().toString()) == placeAry[0]) {
-//                            place1.setText(textView1.getText().toString());
-//                            textView1.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            // count++;
-//                        }
-
-                    }
-                });
-                object[1].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView2.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 1 is clicked");
-                        checkBlank(textView2.getText().toString());
-//                        if (Integer.parseInt(textView2.getText().toString()) == placeAry[1]) {
-//                            place2.setText(textView2.getText().toString());
-//                            textView2.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //  count++;
-//                        }
-                    }
-                });
-                object[2].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView3.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 3 is clicked");
-                        checkBlank(textView3.getText().toString());
-//                        if (Integer.parseInt(textView3.getText().toString()) == placeAry[2]) {
-//                            place3.setText(textView3.getText().toString());
-//                            textView3.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            // count++;
-//                        }
-                    }
-                });
-                object[3].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView4.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 4 is clicked");
-                        checkBlank(textView4.getText().toString());
-//                        if (Integer.parseInt(textView4.getText().toString()) == placeAry[3]) {
-//                            place4.setText(textView4.getText().toString());
-//                            textView4.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            // count++;
-//                        }
-                    }
-                });
-                object[4].setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        isClicked = true;
-                        textView5.setVisibility(TextView.INVISIBLE);
-                        System.out.println("Text View 5 is clicked");
-                        checkBlank(textView5.getText().toString());
-//                        if (Integer.parseInt(textView5.getText().toString()) == placeAry[4]) {
-//                            place5.setText(textView5.getText().toString());
-//                            textView5.setVisibility(TextView.INVISIBLE);
-//                        } else {
-//                            //count++;
-//                        }
-                    }
-                });
-
-            }
-            count++;
-        }
+            });
+            return playedStatus;
     }
 
-    private boolean checkBlank(String num) {
+    private String checkBlank(String num) {
+
+
+
         final int[] sortAry1 = new int[5];
-        boolean isBlank = false;
-        for (int i = 0; i < sortAry1.length; i++) {
-            sortAry1[i] = sortAry[i];
+        String status = null;
+        for (int i = 0; i < placeAry.length; i++) {
+            sortAry1[i] = placeAry[i];
         }
-
-
-
-        System.out.println("Is First Place blnak" + isFirstPlaceBlank);
+        System.out.println("Is First Place blnak " + isFirstPlaceBlank);
+        System.out.println("Is Second Place blank " + isSecondPlaceBlank);
+        System.out.println("Is Third Place blnak " + isThirdPlaceBlank);
+        System.out.println("Is Fourth Place blnak " + isFourthPlaceBlank);
+        System.out.println("Is Fifth Place blank " + isFifthPlaceBlank);
         if (isFirstPlaceBlank) {
             if (sortAry1[0] == Integer.parseInt(num)) {
                 place1.setText(Integer.toString(sortAry1[0]));
                 isFirstPlaceBlank = false;
-                isBlank = false;
+                status = "Correct";
+
             }
-        } else if (isSecondPlaceBlank) {
+            else
+            {
+                status = "Wrong";
+            }
+        } else if (isSecondPlaceBlank && isFirstPlaceBlank == false) {
             if (sortAry1[1] == Integer.parseInt(num)) {
                 place2.setText(Integer.toString(sortAry1[1]));
                 isSecondPlaceBlank = false;
-                isBlank = false;
+                status = "Correct";
+
+            }
+            else
+            {
+                status = "Wrong";
             }
 
-        } else if (isThirdPlaceBlank) {
+        } else if (isThirdPlaceBlank && isFirstPlaceBlank == false && isSecondPlaceBlank == false) {
             if (sortAry1[2] == Integer.parseInt(num)) {
                 place3.setText(Integer.toString(sortAry1[2]));
                 isThirdPlaceBlank = false;
-                isBlank = false;
+                status = "Correct";
+
+            }
+            else
+            {
+                status = "Wrong";
             }
 
-        } else if (isFourthPlaceBlank) {
+        } else if (isFourthPlaceBlank && isFirstPlaceBlank == false && isSecondPlaceBlank == false && isThirdPlaceBlank == false) {
             if (sortAry1[3] == Integer.parseInt(num)) {
-                place1.setText(Integer.toString(sortAry1[0]));
+                place4.setText(Integer.toString(sortAry1[3]));
                 isFourthPlaceBlank = false;
-                isBlank = false;
+                status = "Correct";
+
 
             }
+            else
+            {
+                status = "Wrong";
+            }
 
-        } else {
-            isBlank = true;
         }
-        return isBlank;
+        else if (isFifthPlaceBlank && isFirstPlaceBlank == false && isSecondPlaceBlank == false && isThirdPlaceBlank == false && isFourthPlaceBlank == false)
+        {
+            if (sortAry1[4] == Integer.parseInt(num)) {
+                place5.setText(Integer.toString(sortAry1[4]));
+                isFifthPlaceBlank = false;
+                status = "Win";
+
+            }
+            else
+            {
+                status = "Wrong";
+            }
+
+        }
+        else{
+            status = "Wrong";
+        }
+        return status;
 
     }
 

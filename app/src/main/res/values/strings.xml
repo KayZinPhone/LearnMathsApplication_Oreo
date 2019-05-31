@@ -15,5 +15,11 @@
     <string name="place4"></string>
     <string name="place5"></string>
 
+    <string name="high_score">High Score</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="point">0pt</string>
+
     <string name="score">0</string>
 </resources>

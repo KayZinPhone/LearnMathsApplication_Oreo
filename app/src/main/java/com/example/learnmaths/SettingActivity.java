@@ -161,14 +161,12 @@ public class SettingActivity extends AppCompatActivity {
                         levelChoiceEditor = levelChoice.edit();
                         levelChoiceEditor.putString("level", "Medium");
                         levelChoiceEditor.apply();
-
                         startActivity(intent);
                     }
                     else{
                         levelChoiceEditor = levelChoice.edit();
                         levelChoiceEditor.putString("level", "Hard");
                         levelChoiceEditor.apply();
-
                         startActivity(intent);
                     }
 
@@ -200,7 +198,6 @@ public class SettingActivity extends AppCompatActivity {
                             levelChoiceEditor = levelChoice.edit();
                             levelChoiceEditor.putString("level", "Hard");
                             levelChoiceEditor.apply();
-
                             startActivity(intent);
 
                         }
