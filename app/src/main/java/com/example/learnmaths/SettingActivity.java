@@ -12,8 +12,8 @@ import android.widget.Toast;
 public class SettingActivity extends AppCompatActivity {
 
 
-    private String background;
-    private String level;
+    private String backgroundChose;
+    private String levelChose;
 
 
     private boolean isBackgroundChosen = false;
@@ -49,7 +49,7 @@ public class SettingActivity extends AppCompatActivity {
         btnBackgroundBubble.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                background = "Bubble";
+                backgroundChose = "Bubble";
                 isBubbleBackgroundChosen = true;
                 isBackgroundChosen = true;
                 System.out.println("Clicked Bubble");
@@ -59,7 +59,7 @@ public class SettingActivity extends AppCompatActivity {
         btnBackgroundBall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                background = "Ball";
+                backgroundChose = "Ball";
                 isBubbleBackgroundChosen = false;
                 isBackgroundChosen = true;
                 System.out.println("Clicked Ball");
@@ -69,7 +69,7 @@ public class SettingActivity extends AppCompatActivity {
         btnEasy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                level = "Easy";
+                levelChose = "Easy";
                 isEasyChosen = true;
                 isMediumChosen = false;
                 isHardChosen = false;
@@ -81,7 +81,7 @@ public class SettingActivity extends AppCompatActivity {
         btnMedium.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                level = "Medium";
+                levelChose = "Medium";
                 isMediumChosen = true;
                 isEasyChosen = false;
                 isHardChosen = false;
@@ -93,7 +93,7 @@ public class SettingActivity extends AppCompatActivity {
         btnHard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                level = "Hard";
+                levelChose = "Hard";
                 isHardChosen = true;
                 isMediumChosen = false;
                 isEasyChosen = false;
